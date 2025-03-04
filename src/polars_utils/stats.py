@@ -12,6 +12,13 @@ def mean(x: pl.Expr, *, w: Weight = None) -> pl.Expr:
     return x.dot(into_normalized_weight(w))
 
 
+def demean(x: pl.Expr, *, w: Weight = None) -> pl.Expr:
+    """
+    Subtracts off the (weighted) mean of an expression.
+    """
+    return x - x.pipe(mean, w=w)
+
+
 def cov(x: pl.Expr, other: pt.IntoExprColumn, *, w: Weight = None) -> pl.Expr:
     """
     Computes the (weighted) covaraince of an expression with another expression.
