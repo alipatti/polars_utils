@@ -2,6 +2,7 @@ from typing import Literal
 
 import polars as pl
 
+from polars_utils import match_name
 from polars_utils.weights import Weight, into_normalized_weight
 
 
@@ -27,7 +28,12 @@ def quantile(
         case _:
             raise ValueError
 
-    return pl.mean_horizontal(*quantiles).gather(x.rank(method="ordinal") - 1)
+    return (
+        pl.mean_horizontal(*quantiles)
+        .gather(x.rank(method="ordinal") - 1)
+        # set name of output
+        .pipe(match_name, x)
+    )
 
 
 def xtile(x: pl.Expr, *, n: int, w: Weight = None, label="{i}"):

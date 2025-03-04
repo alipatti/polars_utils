@@ -24,3 +24,12 @@ def normalize(x: pl.Expr) -> pl.Expr:
     Normalizes an expression so that it sums to one.
     """
     return x / x.sum()
+
+
+def match_name(x: pl.Expr, col_to_match: pl.Expr, *, fallback="literal") -> pl.Expr:
+    """
+    Changes the name of an expression to match the name of another expression.
+    """
+    return x.alias(
+        col_to_match.meta.output_name(raise_if_undetermined=False) or fallback
+    )
