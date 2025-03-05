@@ -8,7 +8,7 @@ from polars_utils.weights import Weight
 
 def absorb(
     x: pl.Expr,
-    fixed_effects: Iterable[str],
+    fixed_effects: Iterable[pt.IntoExpr],
     *,
     w: Weight = None,
     by: Optional[Iterable[pt.IntoExpr]] = None,
