@@ -11,3 +11,6 @@ wheels/
 
 # ruff
 .ruff_cache
+
+# fuck this fucking file fuck
+.DS_Store
