@@ -31,13 +31,19 @@ def cov(x: pl.Expr, other: pt.IntoExprColumn, *, w: Weight = None) -> pl.Expr:
     return inside_sum.sum().alias("cov")
 
 
-def var(x: pl.Expr, *, w: Weight = None):
+def var(x: pl.Expr, *, w: Weight = None, denominator_correction=0):
     """
     Computes the (weighted) variance of an expression.
     """
     w = into_normalized_weight(w)
 
-    return (x - x.dot(w)).pow(2).dot(w).pipe(match_name, x)
+    return (
+        (x - x.dot(w))
+        .pow(2)
+        .dot(w)
+        # degrees of freedom correction
+        .mul(pl.len() / pl.len().sub(denominator_correction))
+    )
 
 
 def cor(x: pl.Expr, y: pt.IntoExprColumn, *, w: Weight = None) -> pl.Expr:
