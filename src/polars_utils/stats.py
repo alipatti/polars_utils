@@ -1,52 +1,60 @@
+from typing import Optional
 import polars as pl
 import polars._typing as pt
 
-from polars_utils import into_expr, match_name
+from polars_utils import into_expr
 from polars_utils.weights import Weight, into_normalized_weight
 
 
-def mean(x: pl.Expr, *, w: Weight = None) -> pl.Expr:
+def mean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
     """
     Computes the (weighted) mean of an expression.
     """
+    if w is None:
+        return x.mean()
+
     return x.dot(into_normalized_weight(w))
 
 
-def demean(x: pl.Expr, *, w: Weight = None) -> pl.Expr:
+def demean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
     """
     Subtracts off the (weighted) mean of an expression.
     """
     return x - x.pipe(mean, w=w)
 
 
-def cov(x: pl.Expr, other: pt.IntoExprColumn, *, w: Weight = None) -> pl.Expr:
+def cov(x: pl.Expr, other: pt.IntoExprColumn, *, w: Optional[Weight] = None) -> pl.Expr:
     """
     Computes the (weighted) covaraince of an expression with another expression.
     """
-    w = into_normalized_weight(w)
-    y = into_expr(other)
-
-    inside_sum = w * (x - x.dot(w)) * (y - y.dot(w))
-
-    return inside_sum.sum().alias("cov")
-
-
-def var(x: pl.Expr, *, w: Weight = None, denominator_correction=0):
-    """
-    Computes the (weighted) variance of an expression.
-    """
-    w = into_normalized_weight(w)
 
     return (
-        (x - x.dot(w))
-        .pow(2)
-        .dot(w)
-        # degrees of freedom correction
-        .mul(pl.len() / pl.len().sub(denominator_correction))
+        (x.pipe(demean, w=w) * into_expr(other).pipe(demean, w=w))
+        .pipe(mean, w=w)
+        .alias("cov")
     )
 
 
-def cor(x: pl.Expr, y: pt.IntoExprColumn, *, w: Weight = None) -> pl.Expr:
+def var(
+    x: pl.Expr,
+    *,
+    w: Optional[Weight] = None,
+    center_around: Optional[pl.Expr] = None,
+):
+    """
+    Computes the (weighted) variance of an expression.
+    """
+
+    # TODO: handle bias correction:
+    # https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Weighted_sample_variance
+    # https://numpy.org/doc/stable/reference/generated/numpy.cov.html
+
+    center_around = center_around or x.pipe(mean, w=w)
+
+    return (x - center_around).pow(2).pipe(mean, w=w)
+
+
+def cor(x: pl.Expr, y: pt.IntoExprColumn, *, w: Optional[Weight] = None) -> pl.Expr:
     """
     Computes the (optionally weighted) Pearson correlation coefficient.
 
