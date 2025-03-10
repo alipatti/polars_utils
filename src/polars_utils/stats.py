@@ -13,9 +13,13 @@ def mean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
     if w is None:
         return x.mean()
 
-    w = into_expr(w)
+    # handle null values in w (they get no weight)
+    w = into_expr(w).fill_null(value=0)
 
-    return x.dot(w) / w.filter(x.is_not_null()).sum()
+    # handle null values in x by omitting those weights from the total
+    sum_w = w.filter(x.is_not_null()).sum()
+
+    return x.dot(w) / sum_w
 
 
 def demean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
