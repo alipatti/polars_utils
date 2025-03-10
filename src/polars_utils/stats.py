@@ -3,7 +3,7 @@ import polars as pl
 import polars._typing as pt
 
 from polars_utils import into_expr
-from polars_utils.weights import Weight, into_normalized_weight
+from polars_utils.weights import Weight
 
 
 def mean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
@@ -13,7 +13,9 @@ def mean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
     if w is None:
         return x.mean()
 
-    return x.dot(into_normalized_weight(w))
+    w = into_expr(w)
+
+    return x.dot(w) / w.filter(x.is_not_null()).sum()
 
 
 def demean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
@@ -23,13 +25,13 @@ def demean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
     return x - x.pipe(mean, w=w)
 
 
-def cov(x: pl.Expr, other: pt.IntoExprColumn, *, w: Optional[Weight] = None) -> pl.Expr:
+def cov(x: pl.Expr, y: pt.IntoExprColumn, *, w: Optional[Weight] = None) -> pl.Expr:
     """
     Computes the (weighted) covaraince of an expression with another expression.
     """
 
     return (
-        (x.pipe(demean, w=w) * into_expr(other).pipe(demean, w=w))
+        (x.pipe(demean, w=w) * into_expr(y).pipe(demean, w=w))
         .pipe(mean, w=w)
         .alias("cov")
     )

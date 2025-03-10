@@ -1,9 +1,19 @@
+from itertools import chain
+
 import polars as pl
 import numpy as np
 
 from polars_utils import stats
 
-x, y, w, n, c = (pl.col(c) for c in ("x", "y", "w", "n", "c"))
+x, x_null, y, w, n, c = (pl.col(c) for c in ("x", "x_null", "y", "w", "n", "c"))
+
+
+def replace_with_nulls(col: pl.Expr, null_proportion=0.1):
+    return (
+        pl.when(pl.int_range(pl.len()).shuffle().lt(pl.len() * null_proportion))
+        .then(None)
+        .otherwise(col)
+    )
 
 
 def create_test_data(seed=10845, n=10_000) -> pl.DataFrame:
@@ -17,7 +27,7 @@ def create_test_data(seed=10845, n=10_000) -> pl.DataFrame:
         c=[100] * n,
     )
 
-    return pl.DataFrame(data)
+    return pl.DataFrame(data).with_columns(x_null=pl.col("x").pipe(replace_with_nulls))
 
 
 def test_mean():
@@ -63,12 +73,12 @@ def test_cov():
 
     assert np.isclose(
         df.select(x.pipe(stats.cov, y))[0, 0],
-        df["x"].var(ddof=0),  # type: ignore
+        np.cov(df["x"], df["y"], ddof=0)[1, 0],
     ), "Unweighted covariance differs from Numpy"
 
     assert np.isclose(
-        df.select(x.pipe(stats.var, w=w))[0, 0],
-        np.cov(df["x"], aweights=df["w"], ddof=0),
+        df.select(x.pipe(stats.cov, y, w=w))[0, 0],
+        np.cov(df["x"], df["y"], aweights=df["w"], ddof=0)[1, 0],
     ), "Weighted variance differs from Numpy"
 
 
