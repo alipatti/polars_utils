@@ -28,17 +28,20 @@ def shrink(
     *,
     variances: pt.IntoExprColumn,
     w: Optional[Weight] = None,
-    mu: Optional[pl.Expr] = None,
+    mu: Optional[pl.Expr] = None,  # mean to shrink to
+    rho: Optional[pl.Expr] = None,  # reliability
 ) -> pl.Expr:
     """
     https://libgen.li/adsa82270d055f6ee991539ac0533036e0dO9ZBZS4G
     """
 
     # point we shrink to
-    mu = estimates.pipe(mean, w=w) if mu is None else mu
+    if mu is None:
+        mu = estimates.pipe(mean, w=w)
 
     # reliability
-    rho = reliability(estimates, variances=variances, w=w, mu=mu)
+    if rho is None:
+        rho = reliability(estimates, variances=variances, w=w, mu=mu)
 
     # shrink towards mean based on reliability
     return estimates.mul(rho) + mu.mul(1 - rho)

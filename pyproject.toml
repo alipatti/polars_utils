@@ -1,6 +1,6 @@
 [project]
 name = "polars-utils"
-version = "0.1.8"
+version = "0.1.9"
 description = "Weighted means, variances, quantiles, fixed effects, and more in Polars."
 readme = "README.md"
 authors = [
