@@ -8,7 +8,7 @@ from polars_utils.stats import mean
 from polars_utils.weights import Weight
 
 
-def reliabiliy(
+def reliability(
     estimates: pl.Expr,
     *,
     variances: pt.IntoExprColumn,
@@ -38,7 +38,7 @@ def shrink(
     mu = estimates.pipe(mean, w=w) if mu is None else mu
 
     # reliability
-    rho = reliabiliy(estimates, variances=variances, w=w, mu=mu)
+    rho = reliability(estimates, variances=variances, w=w, mu=mu)
 
     # shrink towards mean based on reliability
     return estimates.mul(rho) + mu.mul(1 - rho)
