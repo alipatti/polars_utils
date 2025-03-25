@@ -26,7 +26,7 @@ def reliability(
 def shrink(
     estimates: pl.Expr,
     *,
-    variances: pt.IntoExprColumn,
+    variances: Optional[pt.IntoExprColumn] = None,
     w: Optional[Weight] = None,
     mu: Optional[pl.Expr] = None,  # mean to shrink to
     rho: Optional[pl.Expr] = None,  # reliability
@@ -41,6 +41,9 @@ def shrink(
 
     # reliability
     if rho is None:
+        if variances is None:
+            raise ValueError("Must pass either variances or reliabilities.")
+
         rho = reliability(estimates, variances=variances, w=w, mu=mu)
 
     # shrink towards mean based on reliability
