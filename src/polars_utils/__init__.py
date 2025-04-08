@@ -1,5 +1,8 @@
+from typing import Optional, TypeVar
 import polars as pl
 import polars._typing as pt
+
+DF = TypeVar("DF", pl.LazyFrame, pl.DataFrame)
 
 
 def into_expr(w: pt.IntoExprColumn) -> pl.Expr:
@@ -19,10 +22,14 @@ def into_expr(w: pt.IntoExprColumn) -> pl.Expr:
         raise ValueError
 
 
-def normalize(x: pl.Expr) -> pl.Expr:
+def normalize(x: pl.Expr, null_mask: Optional[pl.Expr] = None) -> pl.Expr:
     """
     Normalizes an expression so that it sums to one.
     """
+
+    if null_mask is not None:
+        x = pl.when(null_mask.is_not_null()).then(x)
+
     return x / x.sum()
 
 

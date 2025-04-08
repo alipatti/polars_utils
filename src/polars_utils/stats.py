@@ -3,7 +3,7 @@ import polars as pl
 import polars._typing as pt
 
 from polars_utils import into_expr
-from polars_utils.weights import Weight
+from polars_utils.weights import Weight, into_normalized_weight
 
 
 def mean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
@@ -13,10 +13,7 @@ def mean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
     if w is None:
         return x.mean()
 
-    # censor weight for null observations
-    w = pl.when(x.is_not_null()).then(w)
-
-    return x.dot(w) / w.sum()
+    return x.dot(into_normalized_weight(w, null_mask=x))
 
 
 def demean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
