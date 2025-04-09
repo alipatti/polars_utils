@@ -70,6 +70,23 @@ def df_quantile(
         raise ValueError(f"invalid tie method: {ties}")
 
 
+def expr_xtile(
+    x: pl.Expr,
+    *,
+    w: Optional[pt.IntoExprColumn] = None,
+    n: int,
+    label="{i}",
+) -> pl.Expr:
+    breaks = pl.linear_space(0, 1, n - 1, closed="none", eager=True).to_list()
+    labels = [label.format(i=i + 1, n=n) for i in range(n)]
+
+    return (
+        x.pipe(expr_quantile, w=w, endpoint="mid")
+        .cut(breaks, labels=labels)
+        .alias(x.meta.output_name() + "_bin")
+    )
+
+
 def df_xtile(
     df: DF,
     cols: Iterable[str],
