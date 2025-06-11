@@ -31,6 +31,8 @@ def cov(
     """
     Computes the (weighted) covaraince of an expression with another expression.
     """
+    if w is None:
+        return pl.cov(x, y, ddof=0)
 
     return (
         (into_expr(x).pipe(demean, w=w) * into_expr(y).pipe(demean, w=w))
@@ -52,6 +54,9 @@ def var(
     # TODO: handle bias correction:
     # https://en.wikipedia.org/wiki/Weighted_arithmetic_mean#Weighted_sample_variance
     # https://numpy.org/doc/stable/reference/generated/numpy.cov.html
+
+    if w is None and center_around is None:
+        return into_expr(x).var(ddof=0)
 
     center_around = center_around or x.pipe(mean, w=w)
 
