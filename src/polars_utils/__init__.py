@@ -1,11 +1,11 @@
 from typing import Optional, TypeVar
 import polars as pl
-import polars._typing as pt
 
 DF = TypeVar("DF", pl.LazyFrame, pl.DataFrame)
+IntoExpr = pl.Expr | str | pl.Series
 
 
-def into_expr(w: pt.IntoExprColumn) -> pl.Expr:
+def into_expr(w: IntoExpr) -> pl.Expr:
     """
     Converts a string (column name) or Polars series into an expression.
     """

@@ -1,17 +1,16 @@
 import polars as pl
-from polars import _typing as pt
 from typing import Iterable, Optional
 
+from polars_utils import IntoExpr
 from polars_utils.stats import mean
-from polars_utils.weights import Weight
 
 
 def absorb(
     x: pl.Expr,
-    fixed_effects: Iterable[pt.IntoExpr],
+    fixed_effects: Iterable[IntoExpr],
     *,
-    w: Weight = None,
-    by: Optional[Iterable[pt.IntoExpr]] = None,
+    w: Optional[IntoExpr] = None,
+    by: Optional[Iterable[IntoExpr]] = None,
     add_back_mean=True,
 ):
     """

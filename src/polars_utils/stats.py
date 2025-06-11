@@ -1,12 +1,11 @@
 from typing import Optional
 import polars as pl
-import polars._typing as pt
 
-from polars_utils import into_expr
-from polars_utils.weights import Weight, into_normalized_weight
+from polars_utils import into_expr, IntoExpr
+from polars_utils.weights import into_normalized_weight
 
 
-def mean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
+def mean(x: pl.Expr, *, w: Optional[IntoExpr] = None) -> pl.Expr:
     """
     Computes the (weighted) mean of an expression.
     """
@@ -16,20 +15,25 @@ def mean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
     return x.dot(into_normalized_weight(w, null_mask=x))
 
 
-def demean(x: pl.Expr, *, w: Optional[Weight] = None) -> pl.Expr:
+def demean(x: pl.Expr, *, w: Optional[IntoExpr] = None) -> pl.Expr:
     """
     Subtracts off the (weighted) mean of an expression.
     """
     return x - x.pipe(mean, w=w)
 
 
-def cov(x: pl.Expr, y: pt.IntoExprColumn, *, w: Optional[Weight] = None) -> pl.Expr:
+def cov(
+    x: IntoExpr,
+    y: IntoExpr,
+    *,
+    w: Optional[IntoExpr] = None,
+) -> pl.Expr:
     """
     Computes the (weighted) covaraince of an expression with another expression.
     """
 
     return (
-        (x.pipe(demean, w=w) * into_expr(y).pipe(demean, w=w))
+        (into_expr(x).pipe(demean, w=w) * into_expr(y).pipe(demean, w=w))
         .pipe(mean, w=w)
         .alias("cov")
     )
@@ -38,7 +42,7 @@ def cov(x: pl.Expr, y: pt.IntoExprColumn, *, w: Optional[Weight] = None) -> pl.E
 def var(
     x: pl.Expr,
     *,
-    w: Optional[Weight] = None,
+    w: Optional[IntoExpr] = None,
     center_around: Optional[pl.Expr] = None,
 ):
     """
@@ -54,7 +58,7 @@ def var(
     return (x - center_around).pow(2).pipe(mean, w=w)
 
 
-def cor(x: pl.Expr, y: pt.IntoExprColumn, *, w: Optional[Weight] = None) -> pl.Expr:
+def cor(x: pl.Expr, y: IntoExpr, *, w: Optional[IntoExpr] = None) -> pl.Expr:
     """
     Computes the (optionally weighted) Pearson correlation coefficient.
 

@@ -1,33 +1,34 @@
 from typing import Optional
 import polars as pl
-from polars import _typing as pt
 
 
-from polars_utils import into_expr
+from polars_utils import IntoExpr, into_expr
 from polars_utils.stats import mean
-from polars_utils.weights import Weight
 
 
 def reliability(
     estimates: pl.Expr,
     *,
-    variances: pt.IntoExprColumn,
-    w: Optional[Weight] = None,
+    variances: IntoExpr,
+    w: Optional[IntoExpr] = None,
     mu: Optional[pl.Expr] = None,
 ):
+    variances = into_expr(variances)
+
     # point around which we compute variance
     mu = estimates.pipe(mean, w=w) if mu is None else mu
 
     # calculate reliability
     signal_variance = ((estimates - mu).pow(2) - variances).pipe(mean, w=w)
-    return signal_variance / into_expr(variances).add(signal_variance)
+
+    return (signal_variance / (variances + signal_variance)).alias("reliability")
 
 
 def shrink(
     estimates: pl.Expr,
     *,
-    variances: Optional[pt.IntoExprColumn] = None,
-    w: Optional[Weight] = None,
+    variances: Optional[IntoExpr] = None,
+    w: Optional[IntoExpr] = None,
     mu: Optional[pl.Expr] = None,  # mean to shrink to
     rho: Optional[pl.Expr] = None,  # reliability
 ) -> pl.Expr:
@@ -47,4 +48,4 @@ def shrink(
         rho = reliability(estimates, variances=variances, w=w, mu=mu)
 
     # shrink towards mean based on reliability
-    return estimates.mul(rho) + mu.mul(1 - rho)
+    return estimates * rho + mu * (1 - rho)

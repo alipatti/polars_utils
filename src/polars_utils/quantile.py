@@ -2,16 +2,15 @@ from typing import Iterable, Literal, Optional
 
 import polars as pl
 
-from polars_utils import match_name, DF
-from polars_utils.weights import Weight, into_normalized_weight
+from polars_utils import IntoExpr, match_name, DF
+from polars_utils.weights import into_normalized_weight
 from polars_utils.stats import mean
-from polars import _typing as pt
 
 
 def expr_quantile(
     x: pl.Expr,
     *,
-    w: Optional[pt.IntoExprColumn] = None,
+    w: Optional[IntoExpr] = None,
     endpoint: Optional[Literal["left", "right", "mid"]] = "mid",
 ) -> pl.Expr:
     """
@@ -33,7 +32,7 @@ def df_quantile(
     df: DF,
     cols: Iterable[str],
     *,
-    w: Optional[pt.IntoExprColumn] = None,
+    w: Optional[IntoExpr] = None,
     ties: Optional[Literal["min", "max", "average"]] = None,
     by: Iterable[str] = [],
 ) -> DF:
@@ -73,7 +72,7 @@ def df_quantile(
 def expr_xtile(
     x: pl.Expr,
     *,
-    w: Optional[pt.IntoExprColumn] = None,
+    w: Optional[IntoExpr] = None,
     n: int,
     label="{i}",
 ) -> pl.Expr:
@@ -91,7 +90,7 @@ def df_xtile(
     df: DF,
     cols: Iterable[str],
     *,
-    w: Optional[pt.IntoExprColumn] = None,
+    w: Optional[IntoExpr] = None,
     ties: Optional[Literal["min", "max", "average"]] = None,
     by: Iterable[str] = [],
     n: int,
