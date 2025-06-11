@@ -1,6 +1,6 @@
 [project]
 name = "polars-utils"
-version = "0.1.13"
+version = "0.1.14"
 description = "Weighted means, variances, quantiles, fixed effects, and more in Polars."
 readme = "README.md"
 authors = [
@@ -22,5 +22,7 @@ dev = [
     "ipython>=8.18.1",
     "matplotlib>=3.10.3",
     "numpy>=2.0.2",
+    "pandas>=2.3.0",
+    "pyarrow>=20.0.0",
     "pytest>=8.3.5",
 ]
