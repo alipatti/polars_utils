@@ -1,5 +1,5 @@
 from itertools import product
-from typing import Literal, Optional
+from typing import Collection, Literal, Optional
 
 import polars as pl
 
@@ -12,10 +12,11 @@ from polars_utils.stats import cov
 def covariance_matrix(
     df: pl.DataFrame,
     w: Optional[IntoExpr] = None,
-    columns=pl.all(),
+    columns: IntoExpr | Collection[str] = pl.all(),
     nulls: Literal["drop_obs", "pairwise_complete", "error"] = "drop_obs",
 ) -> np.ndarray:
-    columns = pl.selectors.expand_selector(df, columns, strict=False)
+    if not isinstance(columns, Collection):
+        columns = pl.selectors.expand_selector(df, columns, strict=False)
 
     if nulls == "drop_obs":
         df = df.drop_nulls(columns)
@@ -35,5 +36,3 @@ def covariance_matrix(
         .to_numpy()
         .reshape((len(columns), len(columns)))
     )
-
-
