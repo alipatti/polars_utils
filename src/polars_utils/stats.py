@@ -26,19 +26,19 @@ def cov(
     x: IntoExpr,
     y: IntoExpr,
     *,
+    centered: bool = False,
     w: Optional[IntoExpr] = None,
 ) -> pl.Expr:
     """
     Computes the (weighted) covaraince of an expression with another expression.
     """
-    if w is None:
+    if w is None and not centered:
         return pl.cov(x, y, ddof=0)
 
-    return (
-        (into_expr(x).pipe(demean, w=w) * into_expr(y).pipe(demean, w=w))
-        .pipe(mean, w=w)
-        .alias("cov")
-    )
+    x = into_expr(x).pipe(demean, w=w) if not centered else into_expr(x)
+    y = into_expr(y).pipe(demean, w=w) if not centered else into_expr(y)
+
+    return (x * y).pipe(mean, w=w).alias("cov")
 
 
 def var(
@@ -63,12 +63,14 @@ def var(
     return (x - center_around).pow(2).pipe(mean, w=w)
 
 
-def cor(x: pl.Expr, y: IntoExpr, *, w: Optional[IntoExpr] = None) -> pl.Expr:
+def cor(x: IntoExpr, y: IntoExpr, *, w: Optional[IntoExpr] = None) -> pl.Expr:
     """
     Computes the (optionally weighted) Pearson correlation coefficient.
 
     See: https://en.wikipedia.org/wiki/Pearson_correlation_coefficient#Weighted_correlation_coefficient
     """
+    x = into_expr(x)
+
     numerator = x.pipe(cov, y, w=w)
     denominator = (x.pipe(var, w=w) * into_expr(y).pipe(var, w=w)).sqrt()
 

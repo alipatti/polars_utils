@@ -1,4 +1,4 @@
-from itertools import product
+from itertools import combinations_with_replacement, product
 from typing import Collection, Literal, Optional
 
 import polars as pl
@@ -29,10 +29,16 @@ def covariance_matrix(
     else:
         raise ValueError
 
-    return (
-        df.select(
-            cov(a, b, w=w).alias(f"{a}|{b}") for a, b in product(columns, columns)
-        )
-        .to_numpy()
-        .reshape((len(columns), len(columns)))
-    )
+    covariances = df.select(
+        cov(a, b, w=w).alias(f"Cov({a},{b})")
+        for a, b in combinations_with_replacement(columns, 2)
+    ).to_numpy()
+
+    n = len(columns)
+    sigma = np.empty((n, n))
+
+    i, j = np.triu_indices(n)
+    sigma[i, j] = covariances  # upper tri
+    sigma[j, i] = covariances  # lower tri
+
+    return sigma

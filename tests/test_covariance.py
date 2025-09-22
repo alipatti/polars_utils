@@ -23,8 +23,9 @@ def test_covariance_matrix():
         ddof=0,
     )
 
-    weighted_mine = iris.pipe(covariance_matrix, w="sepal_length")
+    for _ in range(100):
+        weighted_mine = iris.pipe(covariance_matrix, w="sepal_length")
 
-    assert np.allclose(weighted_np, weighted_mine), (
-        "weighted cov matrix not equal to numpy"
-    )
+        assert np.allclose(weighted_np, weighted_mine), (
+            "weighted cov matrix not equal to numpy"
+        )
